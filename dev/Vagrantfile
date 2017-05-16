@@ -171,6 +171,15 @@ def define_chef_server(config, attributes)
       json = simple_deep_merge(json, { "provisioning" => { "chef-server-config" => ldap } })
     end
 
+    if vmattr['elasticsearch']['start']
+      elasticsearch = { "opscode_solr4['external']" => "true",
+                        "opscode_solr4['external_url']" => '"http://elasticsearch:9200"',
+                        "opscode_erchef['search_provider']" => '"elasticsearch"',
+                        "opscode_erchef['search_queue_mode']" => '"batch"'
+      }
+      json = simple_deep_merge(json, { "provisioning" => { "chef-server-config" => elasticsearch } })
+    end
+
     dotfiles_path = vmattr["dotfile_path"] || "dotfiles"
     # This is only used for the initial sync  - it was prone failures when allowed
     # to run otherwise. Instead, run thet command './sync' in the dev dir after the vm is online.
@@ -268,7 +277,9 @@ def define_elasticsearch_server(config, attributes)
   set_chef_zero_provisioning(config,
                              recipes: ["provisioning::hosts"],
                              json: { 'provisioning' => { 'hosts' =>  ips_to_fqdns } })
-  config.vm.provision "shell", path: "scripts/provision-elasticsearch.sh"
+  config.vm.provision "shell",
+                      path: "scripts/provision-elasticsearch.sh",
+                      env: { 'ELASTIC_VERSION' => attributes["vm"]["elasticsearch"]["version"] }
 end
 
 def define_backend_server(config, attribute)
