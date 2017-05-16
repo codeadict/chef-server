@@ -97,6 +97,7 @@ module Pedant
               # The fact that the parameters to
               # authenticated_request are memoized
               # doesn't affect us, though.
+              STDOUT.puts("#{request_method}\n#{request_url_with_query_parameters}\n#{requestor}\n#{request_options}\n\n")
               r = authenticated_request(request_method, request_url_with_query_parameters, requestor, request_options)
               r.should look_like search_success_response
             end
