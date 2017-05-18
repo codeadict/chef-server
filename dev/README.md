@@ -305,3 +305,13 @@ vm:
     start: true
     use-external: true
 ```
+# Using elasticsearch 
+
+To create a separate elasticsearch vm create a `config.yml` file with the following contents:
+```
+  elasticsearch:
+    start: true
+    # The major version family to use - either "2" or "5".
+    version: "5"
+```
+

@@ -33,6 +33,7 @@ update(Body) ->
                     {error, {solr_500, string()}}.
 search(#chef_solr_query{} = Query) ->
     Url = "/chef/_search",
+    file:write_file("/tmp/foo", io_lib:fwrite("Body: ~p.\n", [query_body(Query)]), [append]),
     {ok, Code, _Head, Body} = chef_index_http:request(Url, get, query_body(Query), ?JSON_HEADER),
     case Code of
         "200" ->
@@ -63,7 +64,7 @@ query_body(#chef_solr_query{
               filter_query = undefined,
               start = Start,
               rows = Rows}) ->
-    jiffy:encode({[{<<"fields">>, <<"_id">>},
+    jiffy:encode({[{<<"stored_fields">>, <<"_id">>},
                    {<<"from">>, Start},
                    {<<"size">>, Rows},
                    query_string_query_ejson(Query)]});
@@ -73,22 +74,28 @@ query_body(#chef_solr_query{
               start = Start,
               rows = Rows}) ->
     chef_index_query:assert_org_id_filter(FilterQuery),
-    jiffy:encode({[{<<"fields">>, <<"_id">>},
+    jiffy:encode({[{<<"stored_fields">>, <<"_id">>},
                    {<<"from">>, Start},
                    {<<"size">>, Rows},
                    {<<"sort">>, [{[{<<"X_CHEF_id_CHEF_X">>, {[{<<"order">>, <<"asc">>}]}}]}]},
                    {<<"query">>, {[
-                                   {<<"filtered">>,{[
+                                   {<<"bool">>,{[
                                                      query_string_query_ejson(Query),
-                                                     {<<"filter">>, {[query_string_query_ejson(FilterQuery)]}}
+                                                     {<<"filter">>, {[query_string_query_ejson2(FilterQuery)]}}
                                                     ]}}]}}]}).
 
 query_string_query_ejson(QueryString) ->
-    { <<"query">>, {
+    { <<"must">>, {
           [{<<"query_string">>,{
                 [{<<"lowercase_expanded_terms">>, false},
                  {<<"query">>, list_to_binary(QueryString)}]}}]
          }
+    }.
+
+query_string_query_ejson2(QueryString) ->
+    {<<"query_string">>,{
+                [{<<"lowercase_expanded_terms">>, false},
+                 {<<"query">>, list_to_binary(QueryString)}]}
     }.
 
 %%
