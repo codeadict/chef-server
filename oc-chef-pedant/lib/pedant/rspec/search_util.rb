@@ -708,7 +708,7 @@ module Pedant
         # Chef Object type (in addition to filtering based on org).  We
         # don't have an easy way to access the org's guid in the tests, so
         # I'm not using that. In any event, the following query works.
-        url = "#{Pedant::Config.search_server}#{Pedant::Config.search_url_fmt}" % {:type => CGI.escape(type), :query => CGI.escape(query)}
+        url = "#{Pedant::Config.search_server}/chef/_search?q=X_CHEF_type_CHEF_X:%{type}%%20%{query}" % {:type => CGI.escape(type), :query => CGI.escape(query)}
         headers = {
           "Accept" => "application/json"
         }
