@@ -33,7 +33,6 @@ update(Body) ->
                     {error, {solr_500, string()}}.
 search(#chef_solr_query{} = Query) ->
     Url = "/chef/_search",
-    file:write_file("/tmp/foo", io_lib:fwrite("Body: ~p.\n", [query_body(Query)]), [append]),
     {ok, Code, _Head, Body} = chef_index_http:request(Url, get, query_body(Query), ?JSON_HEADER),
     case Code of
         "200" ->
@@ -64,39 +63,39 @@ query_body(#chef_solr_query{
               filter_query = undefined,
               start = Start,
               rows = Rows}) ->
-    jiffy:encode({[{<<"stored_fields">>, <<"_id">>},
+    jiffy:encode({[{get_fields_tag(), <<"_id">>},
                    {<<"from">>, Start},
                    {<<"size">>, Rows},
-                   query_string_query_ejson(Query)]});
+                   {<<"query">>, {[query_string_query_ejson(Query)]}}
+                  ]});
 query_body(#chef_solr_query{
               query_string = Query,
               filter_query = FilterQuery,
               start = Start,
               rows = Rows}) ->
     chef_index_query:assert_org_id_filter(FilterQuery),
-    jiffy:encode({[{<<"stored_fields">>, <<"_id">>},
-                   {<<"from">>, Start},
-                   {<<"size">>, Rows},
-                   {<<"sort">>, [{[{<<"X_CHEF_id_CHEF_X">>, {[{<<"order">>, <<"asc">>}]}}]}]},
-                   {<<"query">>, {[
-                                   {<<"bool">>,{[
-                                                     query_string_query_ejson(Query),
-                                                     {<<"filter">>, {[query_string_query_ejson2(FilterQuery)]}}
-                                                    ]}}]}}]}).
+    jiffy:encode({[{ get_fields_tag(), <<"_id">>},
+        {<<"from">>, Start},
+        {<<"size">>, Rows},
+        {<<"sort">>, [{[{<<"X_CHEF_id_CHEF_X">>, {[{<<"order">>, <<"asc">>}]}}]}]},
+        {<<"query">>, {[
+            {<<"bool">>,{[
+                {<<"must">>, {[query_string_query_ejson(Query)]}},
+                {<<"filter">>, {[query_string_query_ejson(FilterQuery)]}}
+            ]}}]}
+        }]}).
+
+get_fields_tag() ->
+    case envy:get(chef_index, solr_elasticsearch_major_version, 2, non_neg_integer) of
+        5 -> <<"stored_fields">>;
+        _ -> <<"fields">>
+    end.
 
 query_string_query_ejson(QueryString) ->
-    { <<"must">>, {
-          [{<<"query_string">>,{
-                [{<<"lowercase_expanded_terms">>, false},
-                 {<<"query">>, list_to_binary(QueryString)}]}}]
-         }
-    }.
-
-query_string_query_ejson2(QueryString) ->
-    {<<"query_string">>,{
-                [{<<"lowercase_expanded_terms">>, false},
-                 {<<"query">>, list_to_binary(QueryString)}]}
-    }.
+    {<<"query_string">>,{[
+        {<<"lowercase_expanded_terms">>, false},
+        {<<"query">>, list_to_binary(QueryString)}
+    ]}}.
 
 %%
 %% A note on deleting

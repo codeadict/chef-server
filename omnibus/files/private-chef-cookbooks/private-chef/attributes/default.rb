@@ -374,6 +374,7 @@ default['private_chef']['opscode-erchef']['solr_http_cull_interval'] = "{1, min}
 default['private_chef']['opscode-erchef']['solr_http_max_age'] = "{70, sec}"
 default['private_chef']['opscode-erchef']['solr_http_max_connection_duration'] = "{70,sec}"
 default['private_chef']['opscode-erchef']['solr_ibrowse_options'] = "[{connect_timeout, 10000}]"
+default['private_chef']['opscode-erchef']['solr_elasticsearch_major_version'] = 2
 # Default: generate signed URLs based upon Host: header. Override with a url, "http:// ..."
 default['private_chef']['opscode-erchef']['base_resource_url'] = :host_header
 default['private_chef']['opscode-erchef']['s3_bucket'] = 'bookshelf'
