@@ -37,9 +37,9 @@ vm:
   # Brings up elasticsearch 5 - not connected to chef-server right now.
   # This is experimental.
   elasticsearch:
-    start: true
+    #start: true
     # The major version family to use - either "2" or "5".
-    version: "5"
+    #version: "2"
   # Override this in config.yml if you want to install chef server plugins with
   # specific packages.
   plugins:

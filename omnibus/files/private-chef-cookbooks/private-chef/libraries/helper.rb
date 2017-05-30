@@ -1,5 +1,6 @@
 require 'mixlib/shellout'
 require 'uri'
+require "net/http"
 
 class OmnibusHelper
   attr_reader :node
@@ -56,6 +57,28 @@ class OmnibusHelper
       host += ":" + url.port.to_s
     end
     host
+  end
+
+  def elastic_search_major_version
+    default_version = 2
+    if node['private_chef']['opscode-solr4']['external']
+      elastic_search_url = node['private_chef']['opscode-solr4']['external_url']
+      begin
+        elastic_search_uri = URI.parse(elastic_search_url)
+        req = Net::HTTP::Get.new(elastic_search_uri)
+        res = Net::HTTP.start(elastic_search_uri.hostname, elastic_search_uri.port, use_ssl: elastic_search_uri.scheme == "https") do |http|
+          http.request(req)
+        end
+        version = JSON.parse(res.body)['version']['number'].split('.').first.to_i
+        version = default_version if version == 0
+        version
+      rescue => e
+        Chef::Log.error "Failed to connect to elasticsearch service. Ensure node['private_chef']['opscode-solr4']['external_url'] is correct."
+        default_version
+      end
+    else
+      default_version
+    end
   end
 
   def solr_url
