@@ -36,7 +36,7 @@ vm:
     start: false
   # Brings up elasticsearch 5 - not connected to chef-server right now.
   # This is experimental.
-  elasticsearch:
+  #elasticsearch:
     #start: true
     # The major version family to use - either "2" or "5".
     #version: "2"
